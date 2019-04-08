@@ -93,7 +93,7 @@ def pull_strava(activities):
 
     ## converting meters to feet
 
-    results['total_elevation_gain'] = activity.total_elevation_gain.num * 3.28084
+    results['total_elevation_gain'] = results.total_elevation_gain * 3.28084
 
     ## converting meters to miles
 
