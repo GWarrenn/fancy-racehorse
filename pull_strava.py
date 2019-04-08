@@ -106,15 +106,13 @@ def pull_strava(activities):
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
 
     results = pd.read_csv('results.csv')
-    results['distance'] = results['distance'].str.replace('m', '')
+    results['distance'] = results['distance'].str.replace(' m', '')
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
 
 
 #################
 
 def pull_strava_cmd():
-    '''placeholder for doc strings
-    '''
     # set up the parser/argument information with command line help
     parser= argparse.ArgumentParser(description="Pull & Save Strava Cycling Data")
     parser.add_argument('activities', help="Total number of activities to pull")
