@@ -20,27 +20,16 @@ def pull_strava(activities):
     client = Client()
     authorize_url = client.authorization_url(client_id=client_id, redirect_uri='http://localhost:8282/authorized')
 
+    ## getting token -- pretty manual process for now
+    
     webbrowser.open_new_tab(authorize_url)
 
     code = raw_input('Enter Temporary Code: ')
     code = str(code)
 
-    ## connect get temporary token from Strava API
+    ## authenticate using API credntials + token
 
     token_response = client.exchange_code_for_token(client_id=client_id, client_secret=client_secret, code=code)
-
-    access_token = token_response['access_token']
-    refresh_token = token_response['refresh_token']
-    expires_at = token_response['expires_at']
-
-    client.access_token = access_token
-    # You must also store the refresh token to be used later on to obtain another valid access token 
-    # in case the current is already expired
-    client.refresh_token = refresh_token
-
-    # An access_token is only valid for 6 hours, store expires_at somewhere and
-    # check it before making an API call.
-    client.token_expires_at = expires_at
 
     ## fields to scrape
 
@@ -109,7 +98,6 @@ def pull_strava(activities):
     results['distance'] = results['distance'].str.replace(' m', '')
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
 
-
 #################
 
 def pull_strava_cmd():
@@ -120,8 +108,6 @@ def pull_strava_cmd():
     args=parser.parse_args()
 
     pull_strava(args.activities)
-
-    #estimate_truthiness()
 
 #################
 
