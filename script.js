@@ -77,6 +77,19 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 	
 	});
 
+	monthly_goals = [{day:'2019-01-01',pct_to_goal:0.00},{day:'2019-02-01',pct_to_goal:0.0833},{day:'2019-03-01',pct_to_goal:0.1667},
+					{day:'2019-04-01',pct_to_goal:0.25},{day:'2019-05-01',pct_to_goal:0.333},{day:'2019-06-01',pct_to_goal:0.4167},
+					{day:'2019-07-01',pct_to_goal:0.5},{day:'2019-08-01',pct_to_goal:0.5833},{day:'2019-09-01',pct_to_goal:0.6667},
+					{day:'2019-10-01',pct_to_goal:0.75},{day:'2019-11-01',pct_to_goal:0.833},{day:'2019-12-01',pct_to_goal:0.91667},
+					{day:'2019-12-31',pct_to_goal:1}]
+
+	monthly_goals.forEach(function(d,i) {
+
+		var formatDay = d3.timeParse("%Y-%m-%d")
+		d.day = formatDay(d.day)	
+	
+	});				
+
 	//line chart -- progress to goal! 	
 
 	valueline = d3.line()
@@ -95,6 +108,11 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		.data([daily_summary])
 		.attr("class", "line")
 		.attr("d", valueline);
+
+	plot.append("path")
+		.data([monthly_goals])
+		.attr("class", "progress-line")
+		.attr("d", valueline);	
 
 	plot.append("g")
 		.attr("transform", "translate(0," + height + ")")
