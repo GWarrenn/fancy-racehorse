@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
-<style> /* set the CSS */
+<style>
+* {
+  box-sizing: border-box;
+}
 
 .line {
   fill: none;
@@ -11,7 +14,32 @@
 .progress-line {
   fill: none;
   stroke: black;
-  stroke-width: 4px;
+  stroke-width: 2px;
+}
+/* Create three equal columns that floats next to each other */
+.column {
+  float: left;
+  width: 33.333%;
+  padding: 0px;
+
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.focus circle {
+  stroke: #6F257F;
+  stroke-width: 1px;
+}
+  
+.hover-line {
+  stroke: #6F257F;
+  stroke-width: 1px;
+  stroke-dasharray: 3,3;
 }
 
 </style>
@@ -25,10 +53,23 @@
 </head>
 	<body>
 
-		<div id='total-miles' align="center"></div>
-		<div id='total-time' align="center"></div>
+		<div class="row">
+		  <div class="column" align='center'>
+		    <h2 id='total-miles'></h2>
+		    <p>Total Miles</p>
+		  </div>
+		  <div class="column" align='center'>
+		  	<h2 id='total-time'></h2> 
+		    <p>Total Time on Bike</p>
+		  </div>
+		  <div class="column" align='center'>
+		  	<h2 id='total-elevation'></h2> 
+		    <p>Total Feet Climbed</p>
+		  </div>		  
+		</div>
 
 		<div align="center" id="progress-to-goal"></div>
+		<div align="center" id="speed-distance"></div>
 
 		<script type="text/javascript" src="script.js"></script>
 
