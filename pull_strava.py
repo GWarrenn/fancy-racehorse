@@ -88,6 +88,10 @@ def pull_strava(activities):
 
     results['distance'] = results.distance * 0.000621371   
 
+    ## timestamp
+
+    results['date_pulled'] = pd.datetime.now().strftime("%m/%d/%Y %I:%M:%S %p ET")
+
     ## export results to csv
 
     print("Exporting results to csv file...")
