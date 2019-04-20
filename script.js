@@ -16,27 +16,30 @@ var progress_plot = d3.select("#progress-to-goal").append("svg")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
+var formatPercent = d3.format(".0%")
+
 // set the ranges
 var x_scatter = d3.scaleLinear().range([0,width]);
 var y_scatter = d3.scaleLinear().range([height, 0]);
 
 var speed_distance_plot = d3.select("#speed-distance").append("svg")
     .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("height", height + margin.top + margin.bottom + 20)
   	.append("g")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");     
 
-var xAxis = d3.axisBottom(x_scatter);
-var yAxis = d3.axisLeft(y_scatter);
-
-var color = d3.scaleOrdinal(d3.schemeCategory10);
+var color = d3.scaleOrdinal() // D3 Version 4
+  .domain(["True", "False"])
+  .range(["#64dbcb", "#2e4744"]);
 
 d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/results.csv", function(data){
     
 	// converting date-time string to actual date-time object
 
 	all_data = data
+
+	document.getElementById("time-stamp").innerHTML = 'Progress as of: ' + data[0].date_pulled ;
 
 	var strictIsoParse = d3.utcParse("%Y-%m-%d %H:%M:%S%Z");
 
@@ -64,7 +67,11 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 				}))
 				.value()
 
-	miles = Math.round(yearly_summary[0].total_miles)
+	var formatter = new Intl.NumberFormat('en-US', {
+  		minimumFractionDigits: 0,
+	});			
+
+	miles = formatter.format(Math.round(yearly_summary[0].total_miles))
 
 	document.getElementById("total-miles").innerHTML = miles ;
 
@@ -84,7 +91,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	document.getElementById("total-time").innerHTML = time;
 
-	elevation = Math.round(yearly_summary[0].total_elevation)
+	elevation = formatter.format(Math.round(yearly_summary[0].total_elevation))
 
 	document.getElementById("total-elevation").innerHTML = elevation;	
 
@@ -155,10 +162,20 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	progress_plot.append("g")
 		.attr("transform", "translate(0," + height + ")")
-		.call(d3.axisBottom(x));
+		.call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b")));
 
 	progress_plot.append("g")
-		.call(d3.axisLeft(y));
+		.call(d3.axisLeft(y).tickFormat(formatPercent));
+
+	// text label for the y axis
+  	progress_plot.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .style("font", "12px arial")
+      .text("Percentage to 2000 miles"); 
 
 	var focus = progress_plot.append("g")
         .attr("class", "focus")
@@ -175,7 +192,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
         .attr("x2", width);
 
     focus.append("circle")
-        .attr("r", 7.5);
+        .attr("r", 3);
 
     focus.append("text")
         .attr("x", 15)
@@ -200,6 +217,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
           d = x0 - d0.day > d1.day - x0 ? d1 : d0;
       focus.attr("transform", "translate(" + x(d.day) + "," + y(d.pct_to_goal) + ")");
       focus.select("text").text(function() { return Math.round(d.pct_to_goal * 100) + "% towards goal (" + Math.round(d.running_sum) + " miles)"; });
+      focus.style("font", "10px arial")      
       focus.select(".x-hover-line").attr("y2", height - y(d.pct_to_goal));
       focus.select(".y-hover-line").attr("x2", width + width);
     }
@@ -209,36 +227,42 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 	x_scatter.domain(d3.extent(data, function(d) { return d.distance; })).nice();
 	y_scatter.domain(d3.extent(data, function(d) { return d.average_speed; })).nice();
 
-	speed_distance_plot.append("g")
-	  .attr("class", "x axis")
-	  .attr("transform", "translate(0," + height + ")")
-	  .call(xAxis)
-	.append("text")
-	  .attr("class", "label")
-	  .attr("x", width)
-	  .attr("y", -6)
-	  .style("text-anchor", "end")
-	  .text("Sepal Width (cm)");
-
-	speed_distance_plot.append("g")
-	  .attr("class", "y axis")
-	  .call(yAxis)
-	.append("text")
-	  .attr("class", "label")
-	  .attr("transform", "rotate(-90)")
-	  .attr("y", 6)
-	  .attr("dy", ".71em")
-	  .style("text-anchor", "end")
-	  .text("Sepal Length (cm)")
-
 	speed_distance_plot.selectAll(".dot")
 	  .data(data)
 	.enter().append("circle")
 	  .attr("class", "dot")
+	  .attr("stroke","black")
+	  .attr("opacity",.7)
 	  .attr("r", 3.5)
 	  .attr("cx", function(d) { return x_scatter(d.distance); })
 	  .attr("cy", function(d) { return y_scatter(d.average_speed); })
 	  .style("fill", function(d) { return color(d.commute); });		
+
+	speed_distance_plot.append("g")
+		.attr("transform", "translate(0," + height + ")")
+		.call(d3.axisBottom(x_scatter));
+
+  	// text label for the x axis
+  	speed_distance_plot.append("text")             
+      .attr("transform",
+            "translate(" + (width/2) + " ," + 
+                           (height + margin.top + 10) + ")")
+      .style("text-anchor", "middle")
+      .style("font", "12px arial")      
+      .text("Distance (miles)");
+
+	speed_distance_plot.append("g")
+		.call(d3.axisLeft(y_scatter));	  
+
+  	// text label for the y axis
+  	speed_distance_plot.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 0 - margin.left)
+      .attr("x",0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .style("font", "12px arial")      
+      .text("Average Speed (mph)");     		
 
 });
 

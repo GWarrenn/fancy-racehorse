@@ -16,10 +16,18 @@
   stroke: black;
   stroke-width: 2px;
 }
-/* Create three equal columns that floats next to each other */
+
 .column {
   float: left;
   width: 33.333%;
+  padding: 0px;
+  font-family: Franklin Gothic Medium
+
+}
+
+.column_charts {
+  float: left;
+  width: 50%;
   padding: 0px;
 
 }
@@ -32,14 +40,16 @@
 }
 
 .focus circle {
-  stroke: #6F257F;
+  fill: #F1F3F3;
+  stroke: #24447f;
   stroke-width: 1px;
 }
   
 .hover-line {
-  stroke: #6F257F;
+  stroke: #24447f;
   stroke-width: 1px;
   stroke-dasharray: 3,3;
+
 }
 
 </style>
@@ -53,24 +63,28 @@
 </head>
 	<body>
 
+
+		<div id='time-stamp' align='center' style="font-family:Franklin Gothic Book;font-size:12px"> </div>
+
 		<div class="row">
-		  <div class="column" align='center'>
+		  <div class="column" align='center' style="border-right: 1px solid black;">
 		    <h2 id='total-miles'></h2>
-		    <p>Total Miles</p>
+		    <p style="font-family:Franklin Gothic Book">Total Miles</p>
 		  </div>
-		  <div class="column" align='center'>
+		  <div class="column" align='center' style="border-right: 1px solid black;">
 		  	<h2 id='total-time'></h2> 
-		    <p>Total Time on Bike</p>
+		    <p style="font-family:Franklin Gothic Book">Total Time on Bike</p>
 		  </div>
 		  <div class="column" align='center'>
 		  	<h2 id='total-elevation'></h2> 
-		    <p>Total Feet Climbed</p>
+		    <p style="font-family:Franklin Gothic Book">Total Feet Climbed</p>
 		  </div>		  
 		</div>
 
-		<div align="center" id="progress-to-goal"></div>
-		<div align="center" id="speed-distance"></div>
-
+		<div class="row">
+			<div class="column_charts" align="center" id="progress-to-goal"></div>
+			<div class="column_charts" align="center" id="speed-distance"></div>
+		</div>
 		<script type="text/javascript" src="script.js"></script>
 
 	</body>
