@@ -51,7 +51,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		d.day = formatDay(d.fmt_date)
 
 		d.distance = +d.distance
-		d.elapsed_time = +d.elapsed_time
+		d.moving_time = +d.moving_time
 		d.average_speed = +d.average_speed
 		d.total_elevation_gain = +d.total_elevation_gain 
 
@@ -62,7 +62,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 				.map((index, id) => ({
 					index: id,
 					total_miles : _.sumBy(index, 'distance'),
-					total_time : _.sumBy(index, 'elapsed_time'),
+					total_time : _.sumBy(index, 'moving_time'),
 					total_elevation : _.sumBy(index, 'total_elevation_gain'),
 				}))
 				.value()
