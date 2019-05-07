@@ -4,6 +4,8 @@ import ConfigParser
 import argparse
 import webbrowser
 import pandas as pd
+import numpy as np
+import pdb
 
 def pull_strava(activities):
 
@@ -100,6 +102,74 @@ def pull_strava(activities):
 
     results = pd.read_csv('results.csv')
     results['distance'] = results['distance'].str.replace(' m', '')
+
+    ## painmeter
+
+    cols =['distance','moving_time','average_speed',
+                            'max_speed','average_watts','average_heartrate',
+                            'max_heartrate','total_elevation_gain']
+
+    results.reset_index(inplace=True)                        
+
+    commute = results[results['commute']].reset_index(drop=True)
+    not_commute = results[~results['commute']].reset_index(drop=True)                     
+
+    for col in cols:
+
+        new_col = col + "_mean"
+
+        # Make room for a new column
+        commute[new_col] = np.nan
+        not_commute[new_col] = np.nan
+
+        # Fill the new column with values
+        for i in commute.index + 1:
+            if i == 1:
+                commute[new_col].iloc[0] = commute[col].iloc[0]
+            else:
+                commute[new_col].iloc[i-1] = commute[col].rolling(window = i+1, min_periods=1).mean()[i-1]
+
+        for i in not_commute.index + 1:
+            if i == 1:
+                not_commute[new_col].iloc[0] = not_commute[col].iloc[0]
+            else:
+                not_commute[new_col].iloc[i-1] = not_commute[col].rolling(window = i+1, min_periods=1).mean()[i-1]
+
+    results = commute.append(not_commute)
+
+##    avg_metrics = results[['commute','distance','moving_time','average_speed',
+##    						'max_speed','average_watts','average_heartrate',
+##    						'max_heartrate','total_elevation_gain']].groupby(['commute']).mean()
+
+##    avg_metrics.columns = [str(col) + '_mean' for col in avg_metrics.columns]
+
+##    results = results.merge(avg_metrics,how='inner',on='commute')
+
+    cols = ['distance','moving_time','average_speed',
+    						'max_speed','average_watts','average_heartrate',
+    						'max_heartrate','total_elevation_gain']
+
+    rel_effort_cols = []
+    mean_cols = []
+
+    for col in cols:
+
+    	mean = col + "_mean"
+    	effort = col + "_rel_effort"
+
+    	try:
+            results[effort] = pd.to_numeric(results[col]) / pd.to_numeric(results[mean])
+            rel_effort_cols.append(effort)
+            mean_cols.append(mean)
+        
+    	except:
+            print('Error with calculation for',col)	
+
+    results['painmeter'] = results[rel_effort_cols].mean(axis=1)
+
+    ##results.drop([rel_effort_cols],axis=1,inplace=True)
+    ##results.drop([mean_cols],axis=1,inplace=True)
+
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
 
 #################
