@@ -39,6 +39,8 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	all_data = data
 
+
+
 	document.getElementById("time-stamp").innerHTML = 'Progress as of: ' + data[0].date_pulled ;
 
 	var strictIsoParse = d3.utcParse("%Y-%m-%d %H:%M:%S%Z");
@@ -54,8 +56,15 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		d.moving_time = +d.moving_time
 		d.average_speed = +d.average_speed
 		d.total_elevation_gain = +d.total_elevation_gain 
+		d.painmeter = +d.painmeter
 
 	});
+
+	function sortByDateAscending(a, b) {
+			return a.fmt_date - b.fmt_date;
+	}
+
+	data = data.sort(sortByDateAscending);
 
 	yearly_summary = _(data)
 				.groupBy('index')
@@ -233,7 +242,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 	  .attr("class", "dot")
 	  .attr("stroke","black")
 	  .attr("opacity",.7)
-	  .attr("r", 3.5)
+	  .attr("r", function(d){return d.painmeter * 5})
 	  .attr("cx", function(d) { return x_scatter(d.distance); })
 	  .attr("cy", function(d) { return y_scatter(d.average_speed); })
 	  .style("fill", function(d) { return color(d.commute); });		
