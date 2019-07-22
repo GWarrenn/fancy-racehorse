@@ -1,6 +1,6 @@
 import stravalib
 from stravalib.client import Client
-import ConfigParser
+import configparser
 import argparse
 import webbrowser
 import pandas as pd
@@ -14,7 +14,7 @@ def pull_strava(activities):
 
     ## get API client id and secret from config file
 
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read("credentials.cfg")
     client_id = config.get('credentials', 'client_id')
     client_secret = config.get('credentials', 'client_secret')
@@ -26,7 +26,7 @@ def pull_strava(activities):
     
     webbrowser.open_new_tab(authorize_url)
 
-    code = raw_input('Enter Temporary Code: ')
+    code = input('Enter Temporary Code: ')
     code = str(code)
 
     ## authenticate using API credntials + token
@@ -44,7 +44,7 @@ def pull_strava(activities):
 
     print("Pulling " + activities + " activities since 1/1/2019")
 
-    for activity in client.get_activities(after = "2019-01-01T00:00:00Z",  limit=activities):
+    for activity in client.get_activities(after = "2019-01-01T00:00:00Z",  limit=int(activities)):
             
         id = activity.id
         name = activity.name
