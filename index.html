@@ -56,13 +56,14 @@
 
 <head>
 <script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.4.3/tabletop.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
 
 </head>
 	<body>
-
 
 		<div id='time-stamp' align='center' style="font-family:Franklin Gothic Book;font-size:12px"> </div>
 
@@ -85,6 +86,9 @@
 			<div class="column_charts" align="center" id="progress-to-goal"></div>
 			<div class="column_charts" align="center" id="speed-distance"></div>
 		</div>
+
+    <div style="font-family:Franklin Gothic Medium;font-size:20px;font-weight: bold" align='center'>Total Miles Biked by Month</div>
+    <div align="center" id="monthly-stats"></div>
 		<script type="text/javascript" src="script.js"></script>
 
 	</body>

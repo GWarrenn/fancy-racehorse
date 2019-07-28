@@ -29,7 +29,7 @@ var speed_distance_plot = d3.select("#speed-distance").append("svg")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");     
 
-var color = d3.scaleOrdinal() // D3 Version 4
+var color = d3.scaleOrdinal()
   .domain(["True", "False"])
   .range(["#64dbcb", "#2e4744"]);
 
@@ -39,11 +39,12 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	all_data = data
 
-
-
 	document.getElementById("time-stamp").innerHTML = 'Progress as of: ' + data[0].date_pulled ;
 
 	var strictIsoParse = d3.utcParse("%Y-%m-%d %H:%M:%S%Z");
+
+	const monthNames = ["January", "February", "March", "April", "May", "June",
+		"July", "August", "September", "October", "November", "December"];
 
     data.forEach(function(d,i) {
 		d.fmt_date = strictIsoParse(d.start_date);
@@ -51,6 +52,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		var formatDay = d3.timeFormat("%Y-%m-%d")
 
 		d.day = formatDay(d.fmt_date)
+		d.month = monthNames[d.fmt_date.getMonth()]
 
 		d.distance = +d.distance
 		d.moving_time = +d.moving_time
@@ -271,7 +273,95 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
       .attr("dy", "1em")
       .style("text-anchor", "middle")
       .style("font", "12px arial")      
-      .text("Average Speed (mph)");     		
+      .text("Average Speed (mph)");  
+
+      /// monthly summary
+
+	monthly_summary = _(data)
+				.groupBy('month')
+				.map((month, id) => ({
+					month: id,
+					total_miles : _.sumBy(month, 'distance')}))
+				.value()	
+
+	var bar_margin = {bar_top: 20, bar_right: 20, bar_bottom: 30, bar_left: 40},
+		bar_width = 960 - bar_margin.bar_left - bar_margin.bar_right,
+		bar_height = 500 - bar_margin.bar_top - bar_margin.bar_bottom;
+
+	// set the ranges
+	var bar_x = d3.scaleBand()
+	      .range([0, bar_width])
+	      .padding(0.1);
+	var bar_y = d3.scaleLinear()
+	      .range([bar_height, 0]);
+
+	var colorScale = d3.scaleSequential()
+			    .domain([100,400])
+			    .interpolator(d3.interpolateYlGnBu)
+
+	// append the svg object to the body of the page
+	// append a 'group' element to 'svg'
+	// moves the 'group' element to the top left margin
+	var bar_svg = d3.select("#monthly-stats")
+		.append("svg")
+		.attr("width", bar_width + bar_margin.bar_left + bar_margin.bar_right)
+		.attr("height", bar_height + bar_margin.bar_top + bar_margin.bar_bottom)
+		.append("g")
+		.attr("transform", 
+		      "translate(" + bar_margin.bar_left + "," + bar_margin.bar_top + ")");
+
+	// Scale the range of the data in the domains
+	bar_x.domain(monthNames);
+	bar_y.domain([0, 400]);
+
+	// append the rectangles for the bar chart
+	bar_svg.selectAll(".bar")
+	  .data(monthly_summary)
+	.enter().append("rect")
+	  .attr("class", "bar")
+	  .attr("x", function(d) { return bar_x(d.month); })
+	  .attr("width", bar_x.bandwidth())
+	  .attr("y", function(d) { return bar_y(d.total_miles); })
+	  .attr("height", function(d) { return bar_height - bar_y(d.total_miles); })
+	  .style("fill", function(d) { return colorScale(d.total_miles); })
+	  .style("stroke", "black")
+	  .on("mouseover", function(type) {
+			d3.selectAll(".text")
+				.style("opacity", 0.3);
+			d3.select(this)
+				.style("opacity", 1);
+			d3.selectAll(".bar")
+				.style("opacity", 0.3)
+				.filter(function(d) { 
+					return d.month == type.month; })
+				.style("opacity", 1);
+		})	
+	  .on("mouseout", function(type) {
+			d3.selectAll(".text")
+				.style("opacity", 1);
+			d3.selectAll(".bar")
+				.style("opacity", 1);		
+		})
+
+	bar_svg.selectAll(".text")  		
+	  .data(monthly_summary)
+	  .enter()
+	  .append("text")
+	  .attr("class","label")
+	  .attr("x", (function(d) { return bar_x(d.month) + bar_x.bandwidth() / 2.75 ; }))
+	  .attr("y", function(d) { return bar_y(d.total_miles) - 15 })
+	  .attr("dy", ".75em")
+	  .text(function(d) { return Math.round(d.total_miles); })
+	  .style("font", "14px arial") ;
+
+	// add the x Axis
+	bar_svg.append("g")
+	  .attr("transform", "translate(0," + bar_height + ")")
+	  .call(d3.axisBottom(bar_x));
+
+	// add the y Axis
+	bar_svg.append("g")
+	  .call(d3.axisLeft(bar_y));				         		
 
 });
 
