@@ -10,6 +10,8 @@ const plot = async () => {
     zoom: 11
   });
 
+  colors = {"True":"#f68f46","False":"#e8fa5b"}
+
   map.on('load', function() {
     //loop through each geojson value
     for (var j = 0; j < data.length; j++) {
@@ -25,7 +27,7 @@ const plot = async () => {
           "line-cap": "round"
         },
         "paint": {
-          "line-color": "#FF9933",
+          "line-color": colors[data[j]["properties"]["Commute"]],
           "line-width": 2,
           "line-opacity": .2
         }

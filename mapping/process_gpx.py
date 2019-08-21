@@ -4,17 +4,25 @@ import json
 import re
 import lxml    
 from lxml import etree
-import lxml.etree as ET
 from os import listdir
 from os.path import isfile, join
 from geojson import LineString, Feature, FeatureCollection, dump
 import numpy as np
+import pandas as pd
 
 import pdb
 
-files = [f for f in listdir('./activities/') if isfile(join('./activities/', f))]
+## get list of current events from activity file
 
-#files = ['2731561468.tcx']
+data = pd.read_csv('C:/Users/augus/Desktop/mapping/export_4778598/activities.csv')
+data['Activity Date'] = pd.to_datetime(data['Activity Date'])
+data = data[data['Activity Date'] > '2019-01-01']
+
+orig_files = data['Filename'].tolist()
+
+pattern = re.compile(r".gz$")
+files = [pattern.sub("", item) for item in orig_files]
+files = ['C:/Users/augus/Desktop/mapping/export_4778598/'+item for item in files]
 
 dict = {}
 
@@ -23,22 +31,33 @@ for file in files:
     gpx_search = re.compile("gpx$")
     
     if gpx_search.search(file):
-    
+
+        pattern = re.compile(r"C:/Users/augus/Desktop/mapping/export_4778598/")
+        file_filter = pattern.sub("", file)
         print(file)
 
         gpx_file = open(file, 'r')
         
         gpx = gpxpy.parse(gpx_file)
+
+        i = 0
         
         for track in gpx.tracks:
             dict[track.name] = {}
+            dict[track.name]['commute'] = str(data['Commute'][data['Filename'] == str(file_filter)].values[0])
+
             dict[track.name]['geo'] = []
             for segment in track.segments:
                 for point in segment.points:
-                    dict[track.name]['geo'].append([point.longitude,point.latitude])
+                    if i > 20:
+                        dict[track.name]['geo'].append([point.longitude,point.latitude])
+                        i = i+1
 
     tcx_search = re.compile("tcx$")
     if tcx_search.search(file):
+
+        pattern = re.compile(r"C:/Users/augus/Desktop/mapping/export_4778598/")
+        file_filter = pattern.sub("", file)
         
         print(file)
         
@@ -66,8 +85,10 @@ for file in files:
         root = tree.getroot()
         
         tracks = []
-        dict[file] = {}
-        dict[file]['geo'] = []
+        dict[file_filter] = {}
+        dict[file_filter]['commute'] = str(data['Commute'][data['Filename'] == str(file_filter)+'.gz'].values[0])
+
+        dict[file_filter]['geo'] = []
         
         for element in root.iter():
                 if element.tag == '{%s}Track'%ns1:
@@ -87,14 +108,15 @@ for file in files:
                             lon.append(node.text)
         
         for i in range(0,len(lat)):
-            dict[file]['geo'].append([float(lon[i]),float(lat[i])])
-     
+            if i > 20 & i < len(lat) - 20:
+                dict[file_filter]['geo'].append([float(lon[i]),float(lat[i])])
+
 ## now convert dict to geojson file
 
 features = []
 
 for key in dict.keys():
-    features.append(Feature(geometry=LineString(dict[key]['geo']),properties={"Name": key}))
+    features.append(Feature(geometry=LineString(dict[key]['geo']),properties={"Name": key,"Commute" : dict[key]['commute']}))
         
 ## dump data to json file for mapping        
         
