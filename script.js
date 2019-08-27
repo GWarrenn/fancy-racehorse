@@ -8,6 +8,7 @@ var margin = {top: 20, right: 20, bottom: 30, left: 50},
 // set the ranges
 var x = d3.scaleTime().range([0, width]);
 var y = d3.scaleLinear().range([height, 0]);
+var transitionDuration = 1000
 
 var progress_plot = d3.select("#progress-to-goal").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -145,7 +146,16 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		var formatDay = d3.timeParse("%Y-%m-%d")
 		d.day = formatDay(d.day)	
 	
-	});				
+	});			
+
+	total_goals = [{day:'2019-01-01',pct_to_goal:1},{day:'2019-12-31',pct_to_goal:1}]
+
+	total_goals.forEach(function(d,i) {
+
+		var formatDay = d3.timeParse("%Y-%m-%d")
+		d.day = formatDay(d.day)	
+	
+	});			
 
 	//line chart -- progress to goal! 	
 
@@ -159,7 +169,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
     start_point = formatDay("2019-01-01")
 
 	x.domain([start_point,end_point]);
-	y.domain([0,1]);
+	y.domain([0,daily_summary[daily_summary["length"]-1].pct_to_goal + .1]);
 
 	progress_plot.append("path")
 		.data([daily_summary])
@@ -170,6 +180,11 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 		.data([monthly_goals])
 		.attr("class", "progress-line")
 		.attr("d", valueline);	
+
+	progress_plot.append("path")
+		.data([total_goals])
+		.attr("class", "goal-line")
+		.attr("d", valueline);
 
 	progress_plot.append("g")
 		.attr("transform", "translate(0," + height + ")")
@@ -247,7 +262,13 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 	  .attr("r", function(d){return d.painmeter * 5})
 	  .attr("cx", function(d) { return x_scatter(d.distance); })
 	  .attr("cy", function(d) { return y_scatter(d.average_speed); })
-	  .style("fill", function(d) { return color(d.commute); });		
+	  .style("fill", function(d) { return color(d.commute); })
+	  .on("mouseover", function(d) {		
+		showTooltip(d)
+		})					
+		.on("mouseout", function(d) {		
+			hideTooltip(d)	
+		})	;		
 
 	speed_distance_plot.append("g")
 		.attr("transform", "translate(0," + height + ")")
@@ -274,6 +295,80 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
       .style("text-anchor", "middle")
       .style("font", "12px arial")      
       .text("Average Speed (mph)");  
+
+
+	function showTooltip(d) {
+		var tooltipWidth = 145;
+		
+		var tooltip = speed_distance_plot.append('g')
+		  .attr('class', 'tooltip');
+		
+		var tooltipRect = tooltip.append('rect')
+		  .attr('width', 0)
+		  .attr('height', 60)
+		  .attr('fill', 'black')
+		  .attr('rx', 3)
+		  .attr('ry', 3)
+		  .style('opacity', 0)
+		  .attr('x', x_scatter(d.distance))
+		  .attr('y', y_scatter(d.average_speed) - 30)
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 0.5)
+		  .attr('width', tooltipWidth)
+		  .attr('y', y_scatter(d.average_speed) - 60);
+
+		var tooltipScore = tooltip.append('text')
+		  .attr('fill', 'white')
+		  .style('opacity', 0)
+		  .attr('x', x_scatter(d.distance) + 5)
+		  .attr('y', y_scatter(d.average_speed) - 20)
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 1)
+		  .attr('y', y_scatter(d.average_speed) - 42)
+		  .text("Total Distance: "  + Math.round(100*d.distance)/100 + " Miles");
+
+		var tooltipStanding = tooltip.append('text')
+		  .attr('fill', 'white')
+		  .style('opacity', 0)
+		  .attr('x', x_scatter(d.distance) + 5)
+		  .attr('y', y_scatter(d.average_speed) - 20)
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 1)
+		  .attr('y', y_scatter(d.average_speed) - 28)
+		  .text("Average Speed: "  + Math.round(100*d.average_speed)/100 + " mph");
+
+		var tooltipPain = tooltip.append('text')
+		  .attr('fill', 'white')
+		  .style('opacity', 0)
+		  .attr('x', x_scatter(d.distance) + 5)
+		  .attr('y', y_scatter(d.average_speed) - 20)
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 1)
+		  .attr('y', y_scatter(d.average_speed) - 14)
+		  .text("Painmeter: "  + Math.round(100*d.painmeter)/100);		  
+
+	}
+
+	function hideTooltip(d) {
+		speed_distance_plot.selectAll('.tooltip text')
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 0);
+		speed_distance_plot.selectAll('.tooltip rect')
+		  .transition()
+		  .duration(transitionDuration/2)
+		  .style('opacity', 0)
+		  .attr('y', function() {
+		    return +d3.select(this).attr('y') + 40;
+		  })
+		  .attr('width', 0)
+		  .attr('height', 0);
+		speed_distance_plot.select('.tooltip').transition().delay(transitionDuration/2).remove();
+	}		
 
       /// monthly summary
 
