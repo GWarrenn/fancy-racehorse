@@ -7,10 +7,13 @@ const plot = async () => {
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v10',
     center: [-77.030034, 38.901863],
+    showZoom: true,
     zoom: 11
   });
 
   colors = {"True":"#f68f46","False":"#e8fa5b"}
+
+  map.addControl(new mapboxgl.NavigationControl());
 
   map.on('load', function() {
     //loop through each geojson value
@@ -29,7 +32,7 @@ const plot = async () => {
         "paint": {
           "line-color": colors[data[j]["properties"]["Commute"]],
           "line-width": 2,
-          "line-opacity": .2
+          "line-opacity": .3
         }
       })
     } 

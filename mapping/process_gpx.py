@@ -9,6 +9,7 @@ from os.path import isfile, join
 from geojson import LineString, Feature, FeatureCollection, dump
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 import pdb
 
@@ -16,13 +17,13 @@ import pdb
 
 data = pd.read_csv('C:/Users/augus/Desktop/mapping/export_4778598/activities.csv')
 data['Activity Date'] = pd.to_datetime(data['Activity Date'])
-data = data[data['Activity Date'] > '2019-01-01']
+data = data[data['Activity Date'] > '2019-08-01']
 
 orig_files = data['Filename'].tolist()
 
 pattern = re.compile(r".gz$")
 files = [pattern.sub("", item) for item in orig_files]
-files = ['C:/Users/augus/Desktop/mapping/export_4778598/'+item for item in files]
+files = ['C:/Users/augus/Desktop/mapping/export_4778598/' + item for item in files]
 
 dict = {}
 
@@ -51,6 +52,8 @@ for file in files:
                 for point in segment.points:
                     if i > 20:
                         dict[track.name]['geo'].append([point.longitude,point.latitude])
+                        time_secs = ((point.time.hour * 360) + (point.time.minute * 60) + point.time.second) / 12239
+                        dict[track.name]['timestamp'].append([time_secs])
                         i = i+1
 
     tcx_search = re.compile("tcx$")
@@ -89,6 +92,7 @@ for file in files:
         dict[file_filter]['commute'] = str(data['Commute'][data['Filename'] == str(file_filter)+'.gz'].values[0])
 
         dict[file_filter]['geo'] = []
+        dict[file_filter]['timestamp'] = []
         
         for element in root.iter():
                 if element.tag == '{%s}Track'%ns1:
@@ -106,8 +110,16 @@ for file in files:
                     if elem.tag == '{%s}LongitudeDegrees'%ns1:    
                         for node in elem.iter():
                             lon.append(node.text)
+                    if elem.tag == '{%s}Time'%ns1:
+                        for node in elem.iter():
+                            node.text = re.sub('-0[0-9]:00', '', node.text)
+                            node.text = re.sub('\+0[0-9]:00', '', node.text)
+                            new_time = datetime.strptime(node.text, '%Y-%m-%dT%H:%M:%S.%f')
+                            time_secs = ((new_time.hour * 360) + (new_time.minute * 60) + new_time.second) / 12239
+                            dict[file_filter]['timestamp'].append(time_secs)
+
         
-        for i in range(0,len(lat)):
+        for i in range(0,len(lat),2):
             if i > 20 & i < len(lat) - 20:
                 dict[file_filter]['geo'].append([float(lon[i]),float(lat[i])])
 
@@ -120,5 +132,8 @@ for key in dict.keys():
         
 ## dump data to json file for mapping        
         
-with open('result.json', 'w') as fp:
-    json.dump(features, fp)
+#with open('result.json', 'w') as fp:
+#    json.dump(features, fp)
+
+with open('test_result.json', 'w') as fp:
+    json.dump(dict, fp)

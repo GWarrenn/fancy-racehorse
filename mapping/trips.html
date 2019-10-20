@@ -1,0 +1,53 @@
+<html>
+  <head>
+    <title>DC Places of Worship</title>
+
+    <script src="https://unpkg.com/deck.gl@^7.0.0/dist.min.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="C:/Users/augus/OneDrive/Documents/GitHub/fancy-racehorse/mapping/test_result.json" ></script>
+
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.50.0/mapbox-gl.js"></script>
+
+  </head>
+
+  <script type="text/javascript">
+
+    const {DeckGL, TripsLayer} = deck;
+
+    console.log(data)
+
+    const deckgl = new DeckGL({
+      mapboxApiAccessToken: 'pk.eyJ1IjoiZ3dhcnJlbm4iLCJhIjoiY2p4d294Z2xhMGh4czNub2N1c202dnNvdCJ9.iRGx2PURnTzXBHgRIH2zKg',
+      mapStyle: 'mapbox://styles/mapbox/light-v10',
+      longitude: -77.0369,
+      latitude: 38.9072,
+      zoom: 11,
+      minZoom: 5,
+      maxZoom: 15
+    });
+
+    function renderLayer () {
+     
+      const layer = new TripsLayer({
+        id: 'trips-layer',
+        data,
+        getPath: d.geo,
+        getTimestamps: d.timestamp,
+        getColor: [253, 128, 93],
+        opacity: 0.8,
+        widthMinPixels: 5,
+        rounded: true,
+        trailLength: 200,
+        currentTime: 0
+      });
+
+      deckgl.setProps({
+          layers: [layer]
+        });
+
+    }
+
+  renderLayer();
+
+  </script>
+</html>
