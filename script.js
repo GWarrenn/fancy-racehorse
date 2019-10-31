@@ -407,7 +407,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	// Scale the range of the data in the domains
 	bar_x.domain(monthNames);
-	bar_y.domain([0, 400]);
+	bar_y.domain([0, 500]);
 
 	// append the rectangles for the bar chart
 	bar_svg.selectAll(".bar")
