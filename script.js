@@ -381,7 +381,7 @@ d3.csv("https://raw.githubusercontent.com/GWarrenn/fancy-racehorse/master/result
 
 	var bar_margin = {bar_top: 20, bar_right: 20, bar_bottom: 30, bar_left: 40},
 		bar_width = 960 - bar_margin.bar_left - bar_margin.bar_right,
-		bar_height = 500 - bar_margin.bar_top - bar_margin.bar_bottom;
+		bar_height = 600 - bar_margin.bar_top - bar_margin.bar_bottom;
 
 	// set the ranges
 	var bar_x = d3.scaleBand()
