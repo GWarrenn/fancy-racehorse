@@ -8,34 +8,31 @@ const plot = async () => {
     style: 'mapbox://styles/mapbox/dark-v10',
     center: [-77.030034, 38.901863],
     showZoom: true,
+    //pitch: 40,
     zoom: 11
   });
-
-  colors = {"True":"#f68f46","False":"#e8fa5b"}
 
   map.addControl(new mapboxgl.NavigationControl());
 
   map.on('load', function() {
-    //loop through each geojson value
-    for (var j = 0; j < data.length; j++) {
       map.addLayer({
-        "id": data[j].properties.Name,
+        "id": 'cycling-results',
         "type": "line",
-        "source": { 
-          "type": "geojson",
-          "data": data[j]
-        },
+		"source": {
+			type: 'vector',
+			url: 'mapbox://gwarrenn.dt0svfe8'
+		},
+		"source-layer": "results",
         "layout": {
           "line-join": "round",
           "line-cap": "round"
         },
         "paint": {
-          "line-color": colors[data[j]["properties"]["Commute"]],
+          "line-color": ['match',['get','Commute'],'True','#f68f46','False','#e8fa5b','#ccc'],
           "line-width": 2,
           "line-opacity": .3
         }
       })
-    } 
   });
 }
 
