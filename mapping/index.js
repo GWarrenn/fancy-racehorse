@@ -20,7 +20,7 @@ const plot = async () => {
         "type": "line",
 		"source": {
 			type: 'vector',
-			url: 'mapbox://gwarrenn.dt0svfe8'
+			url: 'mapbox://gwarrenn.2bg2watt'
 		},
 		"source-layer": "results",
         "layout": {
