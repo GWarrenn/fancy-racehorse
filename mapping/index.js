@@ -16,14 +16,28 @@ function showHideCommute(){
 	plot()
 }
 
+map_style = 'mapbox://styles/gwarrenn/ck0sl05xqetj01crs3u4prvyb'
+
+function changeMapType(){
+	currentMode = document.querySelector('input[name="maptype"]:checked').value;
+	if (currentMode === 'Minimal') {
+		map_style = 'mapbox://styles/gwarrenn/ck0sl05xqetj01crs3u4prvyb'
+	}	
+	if (currentMode === 'Detailed') {
+		map_style = 'mapbox://styles/mapbox/dark-v10'
+	}	
+
+	plot()
+}
+
 // Mapping
 
 const plot = async () => {
 
 	const map = new mapboxgl.Map({
 		container: 'map',
-		style: 'mapbox://styles/mapbox/dark-v10',
-		center: [-77.030034, 38.901863],
+		style: map_style,
+		center: [-77.030034, 38.92],
 		showZoom: true,
 		//pitch: 40,
 		zoom: 11
@@ -42,17 +56,17 @@ const plot = async () => {
 			"type": "line",
 			"source": {
 				type: 'vector',
-				url: 'mapbox://gwarrenn.2bg2watt'
+				url: 'mapbox://gwarrenn.dgwdb2ow'
 			},
-			"source-layer": "results",
+			"source-layer": "result",
 			"layout": {
 				"line-join": "round",
 				"line-cap": "round"
 			},
 			"paint": {
 				"line-color": ['match',['get','Commute'],'True','#f68f46','False','#e8fa5b','#ccc'],
-				"line-width": 2,
-				"line-opacity": .3
+				"line-width": 1,
+				"line-opacity": .2
 			},
 			"filter": ["!=", "Commute", filter_value]
 		})

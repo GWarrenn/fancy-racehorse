@@ -15,15 +15,15 @@ import pdb
 
 ## get list of current events from activity file
 
-data = pd.read_csv('C:/Users/augus/Desktop/mapping/export_4778598/activities.csv')
+data = pd.read_csv('C:/Users/august.warren/Desktop/misc/mapping/export_4778598/activities.csv')
 data['Activity Date'] = pd.to_datetime(data['Activity Date'])
-data = data[data['Activity Date'] > '2019-08-01']
+data = data[data['Activity Date'] > '2019-01-01']
 
 orig_files = data['Filename'].tolist()
 
 pattern = re.compile(r".gz$")
 files = [pattern.sub("", item) for item in orig_files]
-files = ['C:/Users/augus/Desktop/mapping/export_4778598/' + item for item in files]
+files = ['C:/Users/august.warren/Desktop/misc/mapping/export_4778598/' + item for item in files]
 
 dict = {}
 
@@ -33,15 +33,17 @@ for file in files:
     
     if gpx_search.search(file):
 
-        pattern = re.compile(r"C:/Users/augus/Desktop/mapping/export_4778598/")
+        pattern = re.compile(r"C:/Users/august.warren/Desktop/misc/mapping/export_4778598/")
         file_filter = pattern.sub("", file)
         print(file)
 
         gpx_file = open(file, 'r')
         
-        gpx = gpxpy.parse(gpx_file)
-
-        i = 0
+        try:
+        	gpx = gpxpy.parse(gpx_file)
+        except:
+        	print("skipping..")
+        	continue
         
         for track in gpx.tracks:
             dict[track.name] = {}
@@ -50,16 +52,14 @@ for file in files:
             dict[track.name]['geo'] = []
             for segment in track.segments:
                 for point in segment.points:
-                    if i > 20:
-                        dict[track.name]['geo'].append([point.longitude,point.latitude])
-                        time_secs = ((point.time.hour * 360) + (point.time.minute * 60) + point.time.second) / 12239
-                        dict[track.name]['timestamp'].append([time_secs])
-                        i = i+1
+                    dict[track.name]['geo'].append([point.longitude,point.latitude])
+                    #time_secs = ((point.time.hour * 360) + (point.time.minute * 60) + point.time.second) / 12239
+                    #dict[track.name]['timestamp'].append([time_secs])
 
     tcx_search = re.compile("tcx$")
     if tcx_search.search(file):
 
-        pattern = re.compile(r"C:/Users/augus/Desktop/mapping/export_4778598/")
+        pattern = re.compile(r"C:/Users/august.warren/Desktop/misc/mapping/export_4778598/")
         file_filter = pattern.sub("", file)
         
         print(file)
@@ -120,8 +120,7 @@ for file in files:
 
         
         for i in range(0,len(lat),2):
-            if i > 20 & i < len(lat) - 20:
-                dict[file_filter]['geo'].append([float(lon[i]),float(lat[i])])
+            dict[file_filter]['geo'].append([float(lon[i]),float(lat[i])])
 
 ## now convert dict to geojson file
 
@@ -132,8 +131,8 @@ for key in dict.keys():
         
 ## dump data to json file for mapping        
         
-#with open('result.json', 'w') as fp:
-#    json.dump(features, fp)
+with open('result.json', 'w') as fp:
+    json.dump(features, fp)
 
-with open('test_result.json', 'w') as fp:
-    json.dump(dict, fp)
+#with open('test_result.json', 'w') as fp:
+#    json.dump(dict, fp)
