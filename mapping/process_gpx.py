@@ -15,7 +15,7 @@ import pdb
 
 ## get list of current events from activity file
 
-data = pd.read_csv('C:/Users/august.warren/Desktop/misc/mapping/export_4778598/activities.csv')
+data = pd.read_csv('export_4778598/activities.csv')
 data['Activity Date'] = pd.to_datetime(data['Activity Date'])
 data = data[data['Activity Date'] > '2019-01-01']
 
@@ -23,7 +23,7 @@ orig_files = data['Filename'].tolist()
 
 pattern = re.compile(r".gz$")
 files = [pattern.sub("", item) for item in orig_files]
-files = ['C:/Users/august.warren/Desktop/misc/mapping/export_4778598/' + item for item in files]
+files = ['export_4778598/' + item for item in files]
 
 dict = {}
 
@@ -33,7 +33,7 @@ for file in files:
     
     if gpx_search.search(file):
 
-        pattern = re.compile(r"C:/Users/august.warren/Desktop/misc/mapping/export_4778598/")
+        pattern = re.compile(r"export_4778598/")
         file_filter = pattern.sub("", file)
         print(file)
 
@@ -59,7 +59,7 @@ for file in files:
     tcx_search = re.compile("tcx$")
     if tcx_search.search(file):
 
-        pattern = re.compile(r"C:/Users/august.warren/Desktop/misc/mapping/export_4778598/")
+        pattern = re.compile(r"export_4778598/")
         file_filter = pattern.sub("", file)
         
         print(file)
