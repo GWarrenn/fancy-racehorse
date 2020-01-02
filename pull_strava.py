@@ -44,7 +44,7 @@ def pull_strava(activities):
 
     print("Pulling " + activities + " activities since 1/1/2019")
 
-    for activity in client.get_activities(after = "2019-01-01T00:00:00Z",  limit=int(activities)):
+    for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2020-01-01T00:00:00Z",limit=int(activities)):
             
         id = activity.id
         name = activity.name
