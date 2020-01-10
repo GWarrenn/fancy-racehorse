@@ -1,5 +1,6 @@
 import stravalib
 from stravalib.client import Client
+from stravalib.util import limiter
 import configparser
 import argparse
 import webbrowser
@@ -7,7 +8,7 @@ import pandas as pd
 import numpy as np
 import pdb
 
-def pull_strava(activities):
+def authenticate():
 
     ## Strava API uses OAuth2, which requires users to manually allow permission, which generates
     ## a token only valid for a number of hours.
@@ -19,7 +20,7 @@ def pull_strava(activities):
     client_id = config.get('credentials', 'client_id')
     client_secret = config.get('credentials', 'client_secret')
 
-    client = Client()
+    client = Client(rate_limiter=limiter.DefaultRateLimiter())
     authorize_url = client.authorization_url(client_id=client_id, redirect_uri='http://localhost:8282/authorized')
 
     ## getting token -- pretty manual process for now
@@ -33,6 +34,75 @@ def pull_strava(activities):
 
     token_response = client.exchange_code_for_token(client_id=client_id, client_secret=client_secret, code=code)
 
+    return client
+
+def pull_segments(segment_dict):
+
+    ######################################################
+    ##
+    ## get segment leaderboards from all completed segments
+    ##
+    ######################################################
+
+    client = authenticate()
+
+    export_file = open('segment_leaderboard_results.txt', 'w')
+
+    segment_leaderboards = {}
+    segments_ids = []
+
+    for effort in segment_dict:
+        segments_ids.append(segment_dict[effort]['segment_id'])
+
+    segments_ids = list(set(segments_ids))
+
+    for segment in segments_ids:
+
+        try:
+            leaders = client.get_segment_leaderboard(segment)
+            
+            segment_leaderboards[segment] = {}
+
+            segment_leaderboards[segment]['number_of_all_attempts'] = leaders.effort_count
+            segment_leaderboards[segment]['kom_time'] = leaders[0].moving_time
+
+            for leader in leaders:
+                if leader.athlete_name == 'August W.':
+                    segment_leaderboards[segment]['my_rank'] = leader.rank
+                    segment_leaderboards[segment]['my_pr_time'] = leader.moving_time    
+
+            ## extract information about the segment            
+
+            segment_info = client.get_segment(segment)
+
+            segment_leaderboards[segment]['segment_name'] = segment_info.name
+            segment_leaderboards[segment]['segment_elevation_gain'] = segment_info.total_elevation_gain
+            segment_leaderboards[segment]['segment_distance'] = segment_info.distance
+            segment_leaderboards[segment]['number_of_my_attempts'] = segment_info.athlete_segment_stats.effort_count
+
+        except Exception as e: 
+            print("Issues with",segment,e)
+
+    ## export to file
+
+    export_file.write("id,number_of_all_attempts,kom_time,my_rank,my_pr_time,segment_name,segment_elevation_gain,segment_distance,number_of_my_attempts\n")
+    for key in segment_leaderboards.keys():
+        export_file.write("%s,"%(key))
+        i = 1
+        for value in segment_leaderboards[key]:
+            if i < 8:
+                export_file.write("%s,"%(segment_leaderboards[key][value]))
+            else:
+                export_file.write("%s\n"%(segment_leaderboards[key][value]))    
+            i+=1              
+
+
+def pull_strava(activities):
+
+    ## authenticate API
+
+    client = authenticate()
+
     ## fields to scrape
 
     cols = ['id','name','start_date','distance','elapsed_time','moving_time',
@@ -44,8 +114,10 @@ def pull_strava(activities):
 
     print("Pulling " + activities + " activities since 1/1/2019")
 
+    segment_efforts = {}
+
     for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2020-01-01T00:00:00Z",limit=int(activities)):
-            
+        
         id = activity.id
         name = activity.name
         start_date = activity.start_date
@@ -72,6 +144,28 @@ def pull_strava(activities):
         total_elevation_gain,achievement_count]
 
         results = results.append(data)
+
+        ######################################################
+        ##
+        ## get all segment efforts for a given activity
+        ##
+        ######################################################
+
+        activity_segments = client.get_activity(activity.id, include_all_efforts="True").segment_efforts
+
+        for effort in activity_segments:
+            segment_efforts[effort.id] = {}
+            segment_efforts[effort.id]['start_date'] = effort.start_date
+            segment_efforts[effort.id]['distance'] = effort.distance
+            segment_efforts[effort.id]['moving_time'] = effort.moving_time
+            segment_efforts[effort.id]['segment_id'] = effort.segment.id
+            segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate
+
+    #############################################
+    ##
+    ## Process & Format Ride-Level Results
+    ##
+    #############################################
 
     results = results.reset_index()
 
@@ -137,14 +231,6 @@ def pull_strava(activities):
 
     results = commute.append(not_commute)
 
-##    avg_metrics = results[['commute','distance','moving_time','average_speed',
-##    						'max_speed','average_watts','average_heartrate',
-##    						'max_heartrate','total_elevation_gain']].groupby(['commute']).mean()
-
-##    avg_metrics.columns = [str(col) + '_mean' for col in avg_metrics.columns]
-
-##    results = results.merge(avg_metrics,how='inner',on='commute')
-
     cols = ['distance','moving_time','average_speed',
     						'max_speed','average_watts','average_heartrate',
     						'max_heartrate','total_elevation_gain']
@@ -171,6 +257,14 @@ def pull_strava(activities):
     ##results.drop([mean_cols],axis=1,inplace=True)
 
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
+
+    ###########################################################################
+    ##
+    ## Now process and export segment & effort level data for analysis
+    ##
+    ###########################################################################
+
+    pull_segments(segment_efforts)
 
 #################
 
