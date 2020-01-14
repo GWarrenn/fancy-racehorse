@@ -36,67 +36,6 @@ def authenticate():
 
     return client
 
-def pull_segments(segment_dict):
-
-    ######################################################
-    ##
-    ## get segment leaderboards from all completed segments
-    ##
-    ######################################################
-
-    client = authenticate()
-
-    export_file = open('segment_leaderboard_results.txt', 'w')
-
-    segment_leaderboards = {}
-    segments_ids = []
-
-    for effort in segment_dict:
-        segments_ids.append(segment_dict[effort]['segment_id'])
-
-    segments_ids = list(set(segments_ids))
-
-    for segment in segments_ids:
-
-        try:
-            leaders = client.get_segment_leaderboard(segment)
-            
-            segment_leaderboards[segment] = {}
-
-            segment_leaderboards[segment]['number_of_all_attempts'] = leaders.effort_count
-            segment_leaderboards[segment]['kom_time'] = leaders[0].moving_time
-
-            for leader in leaders:
-                if leader.athlete_name == 'August W.':
-                    segment_leaderboards[segment]['my_rank'] = leader.rank
-                    segment_leaderboards[segment]['my_pr_time'] = leader.moving_time    
-
-            ## extract information about the segment            
-
-            segment_info = client.get_segment(segment)
-
-            segment_leaderboards[segment]['segment_name'] = segment_info.name
-            segment_leaderboards[segment]['segment_elevation_gain'] = segment_info.total_elevation_gain
-            segment_leaderboards[segment]['segment_distance'] = segment_info.distance
-            segment_leaderboards[segment]['number_of_my_attempts'] = segment_info.athlete_segment_stats.effort_count
-
-        except Exception as e: 
-            print("Issues with",segment,e)
-
-    ## export to file
-
-    export_file.write("id,number_of_all_attempts,kom_time,my_rank,my_pr_time,segment_name,segment_elevation_gain,segment_distance,number_of_my_attempts\n")
-    for key in segment_leaderboards.keys():
-        export_file.write("%s,"%(key))
-        i = 1
-        for value in segment_leaderboards[key]:
-            if i < 8:
-                export_file.write("%s,"%(segment_leaderboards[key][value]))
-            else:
-                export_file.write("%s\n"%(segment_leaderboards[key][value]))    
-            i+=1              
-
-
 def pull_strava(activities):
 
     ## authenticate API
@@ -115,6 +54,7 @@ def pull_strava(activities):
     print("Pulling " + activities + " activities since 1/1/2019")
 
     segment_efforts = {}
+    export_file = open('segment_effort_results.txt', 'w')
 
     for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2020-01-01T00:00:00Z",limit=int(activities)):
         
@@ -159,7 +99,24 @@ def pull_strava(activities):
             segment_efforts[effort.id]['distance'] = effort.distance
             segment_efforts[effort.id]['moving_time'] = effort.moving_time
             segment_efforts[effort.id]['segment_id'] = effort.segment.id
-            segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate
+            segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate      
+
+    #############################################
+    ##
+    ## export effort attempts to file    
+    ##
+    #############################################
+
+    export_file.write("id,start_date,distance,moving_time,segment_id,average_heartrate\n")
+    for key in segment_efforts.keys():
+        export_file.write("%s,"%(key))
+        i = 1
+        for value in segment_efforts[key]:
+            if i < 5:
+                export_file.write("%s,"%(segment_efforts[key][value]))
+            else:
+                export_file.write("%s\n"%(segment_efforts[key][value]))    
+            i+=1     
 
     #############################################
     ##
@@ -257,14 +214,6 @@ def pull_strava(activities):
     ##results.drop([mean_cols],axis=1,inplace=True)
 
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
-
-    ###########################################################################
-    ##
-    ## Now process and export segment & effort level data for analysis
-    ##
-    ###########################################################################
-
-    pull_segments(segment_efforts)
 
 #################
 
