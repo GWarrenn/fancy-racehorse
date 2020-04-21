@@ -57,8 +57,6 @@ def pull_segments():
 
     segments_ids = list(segment_efforts.segment_id.unique())
 
-    segments_ids = segments_ids[:75]
-
     i = 1
 
     for segment in segments_ids:

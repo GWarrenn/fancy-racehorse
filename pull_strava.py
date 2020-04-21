@@ -36,7 +36,7 @@ def authenticate():
 
     return client
 
-def pull_strava(activities):
+def pull_strava(activities,segments):
 
     ## authenticate API
 
@@ -85,38 +85,43 @@ def pull_strava(activities):
 
         results = results.append(data)
 
-        ######################################################
+        if segments:
+
+            ######################################################
+            ##
+            ## get all segment efforts for a given activity
+            ##
+            ######################################################
+
+            activity_segments = client.get_activity(activity.id, include_all_efforts="True").segment_efforts
+
+            for effort in activity_segments:
+                segment_efforts[effort.id] = {}
+                segment_efforts[effort.id]['activity_id'] = activity.id
+                segment_efforts[effort.id]['start_date'] = effort.start_date
+                segment_efforts[effort.id]['distance'] = effort.distance
+                segment_efforts[effort.id]['moving_time'] = effort.moving_time
+                segment_efforts[effort.id]['segment_id'] = effort.segment.id
+                segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate      
+
+    if segments:
+
+        #############################################
         ##
-        ## get all segment efforts for a given activity
+        ## export effort attempts to file    
         ##
-        ######################################################
+        #############################################
 
-        activity_segments = client.get_activity(activity.id, include_all_efforts="True").segment_efforts
-
-        for effort in activity_segments:
-            segment_efforts[effort.id] = {}
-            segment_efforts[effort.id]['start_date'] = effort.start_date
-            segment_efforts[effort.id]['distance'] = effort.distance
-            segment_efforts[effort.id]['moving_time'] = effort.moving_time
-            segment_efforts[effort.id]['segment_id'] = effort.segment.id
-            segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate      
-
-    #############################################
-    ##
-    ## export effort attempts to file    
-    ##
-    #############################################
-
-    export_file.write("id,start_date,distance,moving_time,segment_id,average_heartrate\n")
-    for key in segment_efforts.keys():
-        export_file.write("%s,"%(key))
-        i = 1
-        for value in segment_efforts[key]:
-            if i < 5:
-                export_file.write("%s,"%(segment_efforts[key][value]))
-            else:
-                export_file.write("%s\n"%(segment_efforts[key][value]))    
-            i+=1     
+        export_file.write("id,activity_id,start_date,distance,moving_time,segment_id,average_heartrate\n")
+        for key in segment_efforts.keys():
+            export_file.write("%s,"%(key))
+            i = 1
+            for value in segment_efforts[key]:
+                if i < 6:
+                    export_file.write("%s,"%(segment_efforts[key][value]))
+                else:
+                    export_file.write("%s\n"%(segment_efforts[key][value]))    
+                i+=1     
 
     #############################################
     ##
@@ -210,21 +215,19 @@ def pull_strava(activities):
 
     results['painmeter'] = results[rel_effort_cols].mean(axis=1)
 
-    ##results.drop([rel_effort_cols],axis=1,inplace=True)
-    ##results.drop([mean_cols],axis=1,inplace=True)
-
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
 
 #################
 
 def pull_strava_cmd():
-    # set up the parser/argument information with command line help
+
     parser= argparse.ArgumentParser(description="Pull & Save Strava Cycling Data")
     parser.add_argument('activities', help="Total number of activities to pull")
+    parser.add_argument("--segments", action='store_true',help="Pull segment data for every ride")
 
     args=parser.parse_args()
 
-    pull_strava(args.activities)
+    pull_strava(args.activities,args.segments)
 
 #################
 
