@@ -51,12 +51,12 @@ def pull_strava(activities,segments):
 
     results = pd.DataFrame(columns=cols)
 
-    print("Pulling " + activities + " activities since 1/1/2019")
+    print("Pulling all " + activities + " activities since 1/1/2019")
 
     segment_efforts = {}
     export_file = open('segment_effort_results.txt', 'w')
 
-    for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2020-01-01T00:00:00Z",limit=int(activities)):
+    for activity in client.get_activities(after = "2019-01-01T00:00:00Z",limit=int(activities)):
         
         id = activity.id
         name = activity.name
