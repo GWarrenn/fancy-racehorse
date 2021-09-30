@@ -7,6 +7,8 @@ import webbrowser
 import pandas as pd
 import numpy as np
 import pdb
+import time
+from datetime import datetime
 
 def authenticate():
 
@@ -47,17 +49,20 @@ def pull_strava(activities,segments):
     cols = ['id','name','start_date','distance','elapsed_time','moving_time',
             'average_speed','max_speed','average_cadence','average_watts',
             'average_heartrate','max_heartrate','calories','commute','has_heartrate',
-            'total_elevation_gain','achievement_count']
+            'total_elevation_gain','achievement_count','activity_type']
 
     results = pd.DataFrame(columns=cols)
 
     print("Pulling " + activities + " activities since 1/1/2019")
 
-    segment_efforts = {}
-    export_file = open('segment_effort_results.txt', 'w')
+    z = 1
 
-    for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2020-01-01T00:00:00Z",limit=int(activities)):
+    for activity in client.get_activities(after = "2019-01-01T00:00:00Z", before = "2021-02-11T00:00:00Z",limit=int(activities)):
         
+        if (z/600).is_integer():
+            print("***",datetime.now().strftime("%H:%M:%S"),": Pausing at", z ,"calls for API rate-limiting")
+            time.sleep(930) 
+
         id = activity.id
         name = activity.name
         start_date = activity.start_date
@@ -75,17 +80,24 @@ def pull_strava(activities,segments):
         has_heartrate = activity.has_heartrate
         total_elevation_gain = activity.total_elevation_gain.num
         achievement_count = activity.achievement_count
+        activity_type = activity.type
 
         data = pd.DataFrame(columns=cols)		
 
         data.loc[1] = [id,name,start_date,distance,elapsed_time,moving_time,
         average_speed,max_speed,average_cadence,average_watts,
         average_heartrate,max_heartrate,calories,commute,has_heartrate,
-        total_elevation_gain,achievement_count]
+        total_elevation_gain,achievement_count,activity_type]
 
         results = results.append(data)
 
         if segments:
+
+            segment_efforts = {}
+            export_file = open('segment_effort_results.txt', 'a')
+            #export_file.write("id,activity_id,start_date,distance,moving_time,segment_id,average_heartrate\n")
+
+            print("Writing segment-level records to file")
 
             ######################################################
             ##
@@ -94,6 +106,8 @@ def pull_strava(activities,segments):
             ######################################################
 
             activity_segments = client.get_activity(activity.id, include_all_efforts="True").segment_efforts
+
+            z += 1
 
             for effort in activity_segments:
                 segment_efforts[effort.id] = {}
@@ -104,24 +118,21 @@ def pull_strava(activities,segments):
                 segment_efforts[effort.id]['segment_id'] = effort.segment.id
                 segment_efforts[effort.id]['average_heartrate'] = effort.average_heartrate      
 
-    if segments:
+            #############################################
+            ##
+            ## export effort attempts to file    
+            ##
+            #############################################
 
-        #############################################
-        ##
-        ## export effort attempts to file    
-        ##
-        #############################################
-
-        export_file.write("id,activity_id,start_date,distance,moving_time,segment_id,average_heartrate\n")
-        for key in segment_efforts.keys():
-            export_file.write("%s,"%(key))
-            i = 1
-            for value in segment_efforts[key]:
-                if i < 6:
-                    export_file.write("%s,"%(segment_efforts[key][value]))
-                else:
-                    export_file.write("%s\n"%(segment_efforts[key][value]))    
-                i+=1     
+            for key in segment_efforts.keys():
+                export_file.write("%s,"%(key))
+                i = 1
+                for value in segment_efforts[key]:
+                    if i < 6:
+                        export_file.write("%s,"%(segment_efforts[key][value]))
+                    else:
+                        export_file.write("%s\n"%(segment_efforts[key][value]))    
+                    i+=1     
 
     #############################################
     ##
@@ -216,6 +227,8 @@ def pull_strava(activities,segments):
     results['painmeter'] = results[rel_effort_cols].mean(axis=1)
 
     results.to_csv('results.csv', index=False, encoding='utf-8-sig')
+
+    z += 1
 
 #################
 

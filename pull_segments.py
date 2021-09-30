@@ -24,7 +24,8 @@ def authenticate():
     client_secret = config.get('credentials', 'client_secret')
 
     client = Client(rate_limiter=limiter.DefaultRateLimiter())
-    authorize_url = client.authorization_url(client_id=client_id, redirect_uri='http://localhost:8282/authorized')
+    scope = ['read_all', 'profile:read_all', 'activity:read_all']
+    authorize_url = client.authorization_url(client_id=client_id, redirect_uri='http://localhost:8282/authorized',scope=scope)
 
     ## getting token -- pretty manual process for now
     
@@ -69,25 +70,26 @@ def pull_segments():
             time.sleep(930) 
 
         try:
-            leaders = client.get_segment_leaderboard(segment)
+
+            #leaders = client.get_segment_leaderboard(segment)
             
             segment_leaderboards[segment] = {}
 
-            segment_leaderboards[segment]['number_of_all_attempts'] = leaders.effort_count
-            segment_leaderboards[segment]['kom_time'] = leaders[0].moving_time
+            #segment_leaderboards[segment]['number_of_all_attempts'] = leaders.effort_count
+            #segment_leaderboards[segment]['kom_time'] = leaders[0].moving_time
 
-            for leader in leaders:
-                if leader.athlete_name == 'August W.':
-                    segment_leaderboards[segment]['my_rank'] = leader.rank
-                    segment_leaderboards[segment]['my_pr_time'] = leader.moving_time
+            #for leader in leaders:
+            #    if leader.athlete_name == 'August W.':
+            #        segment_leaderboards[segment]['my_rank'] = leader.rank
+            #        segment_leaderboards[segment]['my_pr_time'] = leader.moving_time
 
             ## for any segments where my PR was on a private ride, I won't be able to access this information        
 
-            if 'my_rank' not in segment_leaderboards[segment].keys():
-                segment_leaderboards[segment]['my_rank'] = "N/A"
-                segment_leaderboards[segment]['my_pr_time'] = "N/A"   
-
-            i += 1        
+            #if 'my_rank' not in segment_leaderboards[segment].keys():
+            #    segment_leaderboards[segment]['my_rank'] = "N/A"
+            #    segment_leaderboards[segment]['my_pr_time'] = "N/A"   
+            #
+            #i += 1        
 
             ## extract information about the segment            
 
@@ -98,6 +100,8 @@ def pull_segments():
             segment_leaderboards[segment]['segment_distance'] = segment_info.distance
             segment_leaderboards[segment]['number_of_my_attempts'] = segment_info.athlete_segment_stats.effort_count
 
+            segment_leaderboards[segment]['average_grade'] = segment_info.average_grade
+
             i += 1
 
         except Exception as e: 
@@ -106,12 +110,13 @@ def pull_segments():
 
     ## export to file
 
-    export_file.write("id,number_of_all_attempts,kom_time,my_rank,my_pr_time,segment_name,segment_elevation_gain,segment_distance,number_of_my_attempts\n")
+    #export_file.write("id,number_of_all_attempts,kom_time,my_rank,my_pr_time,segment_name,segment_elevation_gain,segment_distance,number_of_my_attempts\n")
+    export_file.write("id,segment_name,segment_elevation_gain,segment_distance,number_of_my_attempts,average_grade\n")
     for key in segment_leaderboards.keys():
         export_file.write("%s,"%(key))
         i = 1
         for value in segment_leaderboards[key]:
-            if i < 8:
+            if i < 5:
                 export_file.write("%s,"%(segment_leaderboards[key][value]))
             else:
                 export_file.write("%s\n"%(segment_leaderboards[key][value]))    

@@ -148,3 +148,107 @@ ggplot(filter(monthly_comparison,fmt_date >= as.Date("2019-04-01","%Y-%m-%d")),
   theme(legend.position = "bottom",
         axis.title.x=element_blank())
 
+############################################################
+##
+## Distance by % new segments
+##
+############################################################
+
+activities <- read.csv("results.csv") %>%
+  filter(activity_type == "Ride") %>%
+  rename(activity_id = id) %>%
+  select(activity_id,distance)
+
+distance_newness <- merge(all_records_filtered,activities) %>%
+  filter(legend == "New Segment") %>%
+  mutate(year_month = format(as.Date(date,"%Y-%m-%d"), "%Y-%m"),
+         fmt_date = as.Date(paste(year_month,"-01",sep="")),
+         year = format(fmt_date, "%Y"),
+         month = format(fmt_date, "%m"))
+
+ggplot(distance_newness,aes(x=distance,y=percent,color=year)) +
+  geom_point() +
+  geom_hline(data = distance_newness,
+             aes(yintercept = mean(percent))) +
+  geom_vline(data = distance_newness,
+             aes(xintercept = mean(distance)))
+
+
+############################################################
+##
+## Distribution of total segment attempts
+##
+############################################################
+
+segment_efforts <- segment_efforts %>%
+  arrange(segment_id,activity_start_date) %>%
+  group_by(segment_id) %>%
+  mutate(hours = as.numeric(str_extract(moving_time, "^[0-9]?[0-9]")),
+         mins = as.numeric(gsub(x = str_extract(moving_time, ":[0-9][0-9]:"),pattern = ":",replacement = "")),
+         secs = as.numeric(str_extract(moving_time, "[0-9][0-9]$")),
+         total_time_secs = (hours * 3600) + (mins * 60) + secs, 
+         num_attempts = sum(n()),
+         attempt_number = n())
+
+all_effort_numbers_dist <- ggplot(segment_efforts,aes(num_attempts)) +
+  geom_histogram(aes(y=..density..), colour="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666") +
+  geom_vline(xintercept = median(segment_efforts$num_attempts))
+
+activities <- read.csv("results.csv") %>%
+  filter(activity_type == "Ride") %>%
+  rename(activity_id = id) %>%
+  select(activity_id,commute)
+
+segment_efforts <- merge(segment_efforts,activities)
+
+commute_effort_numbers_dist <- ggplot(segment_efforts,aes(num_attempts)) +
+  geom_histogram(aes(y=..density..), colour="black", fill="white")+
+  geom_density(alpha=.2, fill="#FF6666") +
+  facet_wrap(~commute)
+
+############################################################
+##
+## Segment effort times
+##
+############################################################
+
+segment_effort_times <- segment_efforts %>%
+  filter(commute == "False") %>%
+  group_by(segment_id) %>%
+  mutate(num_attempts = n(),
+         attempt_num = row_number()) %>%
+  filter(num_attempts >= 10) %>%
+  ungroup() %>%
+  mutate(total_attempts_quartile = ntile(num_attempts,4)) %>%
+  arrange(segment_id,attempt_num) %>%
+  group_by(segment_id) %>%
+  mutate(decile = ntile(attempt_num, 10)) %>%
+  group_by(total_attempts_quartile,decile) %>%
+  summarise(avg_time = mean(total_time_secs),
+            n = sum(n()))
+
+ggplot(segment_effort_times,aes(x=decile,y=avg_time)) +
+  geom_bar(stat="identity") +
+  geom_smooth(method = "lm") +
+  facet_wrap(~total_attempts_quartile)
+
+regression_df <- segment_efforts %>%
+  filter(commute == "False") %>%
+  group_by(segment_id) %>%
+  mutate(num_attempts = n(),
+         attempt_num = row_number()) %>%
+  filter(num_attempts >= 10) %>%
+  ungroup() %>%
+  mutate(total_attempts_quartile = ntile(num_attempts,4)) %>%
+  arrange(segment_id,attempt_num) %>%
+  group_by(segment_id) %>%
+  arrange(segment_id,attempt_number) %>%
+  group_by(segment_id) %>%
+  mutate(decile = ntile(attempt_number, 10),
+         distance_meters = as.numeric(gsub(x = distance,pattern = " m",replacement = "")))
+
+
+summary(lm(regression_df,formula = total_time_secs ~ distance_meters + total_attempts_quartile + decile))
+
+
