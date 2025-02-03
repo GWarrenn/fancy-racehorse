@@ -43,6 +43,39 @@ const plot = async () => {
 		zoom: 11
 	});
 
+	const minDate = new Date('2018-01-01');
+	const maxDate = new Date('2025-12-31');
+
+	const slider = document.getElementById('date-slider');
+	const dateRange = document.getElementById('date-range');
+
+	slider.min = minDate.getTime();
+	slider.max = maxDate.getTime();
+
+	// Set initial slider value (e.g., to the middle)
+	slider.value = maxDate.getTime();
+
+	updateDateRange();
+
+	function updateDateRange() {
+		const selectedDate = new Date(parseInt(slider.value));
+		dateRange.textContent = selectedDate.toLocaleDateString();
+	}
+
+	slider.addEventListener('input', () => {
+		updateDateRange();
+		filterFeatures();
+	});
+
+	function filterFeatures() {
+		const selectedDate = new Date(parseInt(slider.value));
+	
+		map.setFilter('cycling-results', [
+			'all',
+			['<=', ['get', 'Date'], selectedDate.toISOString().slice(0, 10)],
+		]);
+	}
+
 	map.addControl(new MapboxGeocoder({
 		accessToken: mapboxgl.accessToken,
 		mapboxgl: mapboxgl
@@ -56,9 +89,9 @@ const plot = async () => {
 			"type": "line",
 			"source": {
 				type: 'vector',
-				url: 'mapbox://gwarrenn.dgwdb2ow'
+				url: 'mapbox://gwarrenn.6fkzgb1b'
 			},
-			"source-layer": "result",
+			"source-layer": "result_20250201",
 			"layout": {
 				"line-join": "round",
 				"line-cap": "round"
